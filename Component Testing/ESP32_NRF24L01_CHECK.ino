@@ -1,52 +1,54 @@
-#include <SPI.h>          // Library untuk komunikasi SPI (Serial Peripheral Interface)
-#include <nRF24L01.h>     // Definisi register dan konstanta khusus modul NRF24L01
-#include <RF24.h>         // Library utama untuk mengontrol modul NRF24L01
+#include <SPI.h>          // Library for SPI (Serial Peripheral Interface) communication
+#include <nRF24L01.h>     // Definitions of NRF24L01-specific registers and constants
+#include <RF24.h>         // Main library for controlling the NRF24L01 module
 
 
 /* 
-  ESP32 + modul NRF24L01
+  ESP32 + NRF24L01 module with NRF24L01 adapter
 
-  Koneksi SPI ESP32 ke modul NRF24L01:
+  ESP32 SPI connections to NRF24L01 adapter:
   --------------------------------
 
   NRF24L01    ESP32
   --------    -----
-  VCC         3.3V                // Catu daya 3.3V
+  VCC         3.3V                // Power supply: 3.3V
   GND         GND                 // Ground
-  CE          GPIO 4              // Chip Enable (mengaktifkan mode TX/RX)
-  CSN (CS)    GPIO 5              // Chip Select untuk komunikasi SPI
+  CE          GPIO 4              // Chip Enable (activates TX/RX mode)
+  CSN (CS)    GPIO 5              // Chip Select for SPI communication
   SCK         GPIO 18             // Clock SPI
   MOSI        GPIO 23             // Master Out Slave In
   MISO        GPIO 19             // Master In Slave Out
-  IRQ         Tidak digunakan
+  IRQ         Not used
 
-  Catatan:
-  - modul NRF24L01 PA+LNA wajib menggunakan tegangan 3.3V (jangan hubungkan ke 5V).
-  - Untuk modul NRF24L01 PA+LNA, agar suplai daya lebih stabil sebaiknya:
-    1. Menambahkan kapasitor 10uF–100uF di antara pin VCC dan GND atau
-    2. Gunakan regulator 3.3V eksternal (pakai adapter NRF24L01)
+  Notes:
+  - The NRF24L01 module must use 3.3V (do not connect directly to 5V).
+  - For NRF24L01 PA+LNA modules (with external antenna), it is recommended to:
+    1. Add a 10uF–100uF capacitor between VCC and GND, or
+    2. Use an NRF24L01 adapter with a 3.3V regulator.
 */
 
-// Membuat objek radio dengan konfigurasi:
+// Create a radio object with the following configuration:
 // CE  -> GPIO 4
 // CSN -> GPIO 5
 RF24 radio(4, 5);
 
 
+// Function to initialize the system and required peripherals, executed once at startup
 void setup() {
-  // Memulai komunikasi Serial Monitor dengan baudrate 115200 bps
+
+  // Start Serial Monitor communication at 115200 baud
   Serial.begin(115200);
 
-  // Memberi waktu agar Serial Monitor siap menerima data
+  // Give the Serial Monitor time to initialize
   delay(3000);
 
-  // Menampilkan judul program di Serial Monitor
+  // Display the program title in the Serial Monitor
   Serial.print("=== TEST NRF24L01 PADA ESP32 ===");
   
-  // Pastikan semua data Serial selesai dikirim
+  // Make sure all Serial data has been transmitted
   Serial.flush();
 
-  // Inisialisasi SPI secara manual untuk ESP32
+  // Manually initialize SPI for the ESP32
   // Format: SPI.begin(SCK, MISO, MOSI, SS)
   // SCK  = GPIO 18
   // MISO = GPIO 19
@@ -56,42 +58,44 @@ void setup() {
 }
 
 
+// Function to repeatedly execute the main program logic
 void loop() {
-  // Mencoba menginisialisasi modul NRF24L01
-  // Fungsi radio.begin() akan mengembalikan:
-  // - true  -> jika modul berhasil terdeteksi
-  // - false -> jika modul tidak ditemukan atau gagal komunikasi
+
+  // Attempt to initialize the NRF24L01 module
+  // radio.begin() returns:
+  // - true  -> if the module is successfully detected
+  // - false -> if the module is not found or communication fails
   if (!radio.begin()) {
 
-    // Jika modul tidak terdeteksi, tampilkan pesan error
+    // If the module is not detected, display an error message
     Serial.println("\n\n❌ NRF24L01 TIDAK TERDETEKSI");
 
-    // Menampilkan kemungkinan penyebab kegagalan
+    // Display possible causes of failure
     Serial.println("Kemungkinan:");
     Serial.println("- Wiring salah");
     Serial.println("- Adapter NRF24L01 rusak");
     Serial.println("- Modul NRF24L01 rusak");
     Serial.println("- Suplai 3.3V tidak stabil");
 
-    // Program dihentikan di sini (infinite loop)
-    // ESP32 akan berhenti dan tidak melanjutkan eksekusi
+    // Stop the program here (infinite loop)
+    // The MCU will halt and not continue execution
     while (1);
   }
 
-  // Jika modul berhasil terdeteksi
+  // If the module is successfully detected
   Serial.println("\n\n✅ NRF24L01 TERDETEKSI");
   Serial.println("Modul kondisinya masih baik.");
   Serial.println();
 
-  // Menampilkan informasi detail modul ke Serial Monitor, seperti:
-  // - Register konfigurasi
+  // Display detailed module information in the Serial Monitor, such as:
+  // - Configuration registers
   // - Channel
   // - Data rate
   // - PA level
   // - CRC
-  // - Address pipe
+  // - Pipe addresses
   radio.printDetails();
 
-  // Tunggu 2 detik sebelum melakukan pengecekan ulang
+  // Wait 2 seconds before checking again
   delay(2000);
 }
